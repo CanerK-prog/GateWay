@@ -2,24 +2,26 @@ package com.mealkit.gateway.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.server.SecurityWebFilterChain;
+import org.springframework.web.reactive.config.EnableWebFlux;
+import org.springframework.security.config.web.server.ServerHttpSecurity;
 
 @Configuration
-@EnableWebSecurity
+@EnableWebFlux
 public class SecurityConfig {
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
-        httpSecurity.oauth2ResourceServer()
-                .opaqueToken()
-                .introspectionUri("http://localhost:9090/oauth2/introspect")
-                .introspectionClientCredentials("client", "secret"); //TODO take parameters from db
+    public SecurityWebFilterChain springSecurityFilterChain(ServerHttpSecurity security){
 
-        httpSecurity.authorizeHttpRequests()
-                .anyRequest().authenticated();
+        security.csrf()
+                .disable()
+                .authorizeExchange(exchange -> exchange
+                        .pathMatchers("/eureka/**")
+                        .permitAll()
+                        .anyExchange()
+                        .authenticated())
+                .oauth2ResourceServer(ServerHttpSecurity.OAuth2ResourceServerSpec::jwt);
 
-        return httpSecurity.build();
+        return security.build();
     }
 }
